@@ -13,6 +13,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements CityDialogFragment.LocationRefreshInterface {
@@ -21,6 +24,8 @@ public class MainActivity extends AppCompatActivity implements CityDialogFragmen
     private DatabaseHandler db;
     private ViewPager mViewPager;
     private PagerAdapter mPagerAdapter;
+
+    private AdView mAdView;
 
     private ArrayList<City> cities = new ArrayList<>();
 
@@ -68,8 +73,14 @@ public class MainActivity extends AppCompatActivity implements CityDialogFragmen
         Log.d("tag", "uruchomiłem onCreate");
 
 
+        initializeAd();
     }
 
+    private void initializeAd(){
+        mAdView = (AdView) findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
+    }
 
     @Override
     protected void onNewIntent(Intent intent) {
