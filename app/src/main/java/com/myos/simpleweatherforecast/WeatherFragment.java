@@ -32,9 +32,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Random;
 
 public class WeatherFragment extends Fragment {
+
+    private static final String TAG = WeatherFragment.class.getSimpleName();
 
     private Typeface weatherFont;
 
@@ -50,6 +51,7 @@ public class WeatherFragment extends Fragment {
     private NetworkImageView nivLocationPhoto;
     private TextView tvCurrentDesc;
     private SwipeRefreshLayout srlPhotoRefresh;
+
 
     private DatabaseHandler db;
 
@@ -210,9 +212,9 @@ public class WeatherFragment extends Fragment {
         Log.d("tag", json.toString());
         showView(true);
         try {
+            String country = json.getJSONObject("sys").getString("country");
             tvCityField.setText(json.getString("name").toUpperCase(Locale.US) +
-                    ", " +
-                    json.getJSONObject("sys").getString("country"));
+                    (country.equals("none")? ", " +country:""));
 
             JSONObject details = json.getJSONArray("weather").getJSONObject(0);
             JSONObject main = json.getJSONObject("main");
@@ -279,7 +281,8 @@ public class WeatherFragment extends Fragment {
                                     lat = json.getJSONObject("coord").getString("lat");
                                     lon = json.getJSONObject("coord").getString("lon");
 
-                                    processPanoramioApi(lat, lon, cityID);
+                                    processGooglePlacesAPI(lat, lon, cityID);
+                                    //processPanoramioApi(lat, lon, cityID);
 
                                 }
                             } catch (JSONException e) {
@@ -307,6 +310,8 @@ public class WeatherFragment extends Fragment {
         }
     }
 
+    //Panoramio API is deprecated
+/*    @Deprecated
     private void processPanoramioApi(final String lat, final String lon, final int cityID) {
 
         String url = new StringBuilder(Constants.PANORRAMIO_PLACES_REQUEST_URL)
@@ -346,6 +351,7 @@ public class WeatherFragment extends Fragment {
 
     }
 
+    @Deprecated
     private void processPanoramioRandomPhotoApi(final String lat, final String lon, final int cityID, final int maxNumber) {
         Random r = new Random();
         int from = r.nextInt(maxNumber);
@@ -395,6 +401,82 @@ public class WeatherFragment extends Fragment {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                    }
+                });
+        Singleton.getInstance().getRequestQueue().add(processPlacePhoto);
+
+    }*/
+
+
+    //TODO add checks odisplay random photos
+
+    private void processGooglePlacesAPI(String lat, String lon, final int cityID) {
+        Log.d("tag", getClass().getName() + "request URL  sent: " + new StringBuilder(Constants.GOOGLE_PLACES_REQUEST_URL).append(lat + "," + lon).toString());
+        StringRequest processPlacePhoto = new StringRequest(Request.Method.GET, new StringBuilder(Constants.GOOGLE_PLACES_REQUEST_URL).append(lat + "," + lon).toString(),
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        JSONObject json;
+
+                        try {
+                            json = new JSONObject(response);
+                            if (json.getString("status").matches("OK")) {
+
+                                JSONArray array = json.getJSONArray("results");
+                                JSONObject tempObj;
+                                JSONArray photosArr;
+                                String photoRef = null;
+
+                                for (int i = 0; i < array.length(); i++) {
+                                    tempObj=array.getJSONObject(i);
+
+
+                                    Log.d(TAG, "tempObj: " + tempObj.toString());
+
+                                    photosArr = tempObj.optJSONArray("photos");
+                                    if(photosArr != null){
+                                        Log.d("tag", getClass().getName() + "photo_reference: " + photoRef);
+
+                                        if(photoRef != null){
+                                            db.updateCity(cityID, DatabaseHandler.getKeyPhotoReference(), new StringBuilder(Constants.GOOGLE_PLACES_PHOTO_URL).append(photoRef).toString());
+
+                                            if (mCallback != null) {
+                                                srlPhotoRefresh.setRefreshing(false);
+                                                mCallback.onRefreshLocation();
+                                            }
+
+                                            Log.d(TAG, "array.length(): " + array.length());
+                                            break;
+                                        }else{
+                                            if (mCallback != null) {
+                                                srlPhotoRefresh.setRefreshing(false);
+                                                mCallback.onRefreshLocation();
+                                            }
+                                        }
+
+
+
+
+
+                                    }
+                                }
+
+
+
+                            }else{
+                                Snackbar.make(flFragmentMain, R.string.noPhotoInGoogle, Snackbar.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                },
+                new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
                     }
                 });
         Singleton.getInstance().getRequestQueue().add(processPlacePhoto);
