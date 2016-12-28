@@ -17,7 +17,8 @@ class PagerAdapter extends FragmentStatePagerAdapter {
     public static ArrayList<City> cities;
 
 
-    public PagerAdapter(FragmentManager fm, ArrayList<City> cities)
+    public
+    PagerAdapter(FragmentManager fm, ArrayList<City> cities)
     {
         super(fm);
         this.cities = cities;
@@ -26,7 +27,7 @@ class PagerAdapter extends FragmentStatePagerAdapter {
 
     @Override
     public Fragment getItem(int position) {
-        Log.e("tag", getClass().getName() + ": getItem current tab position: " + position);
+        Log.d("tag", getClass().getName() + ": getItem current tab position: " + position);
         android.support.v4.app.Fragment myFragment = null;
         if(cities.isEmpty()){
             myFragment = WeatherFragment
@@ -42,7 +43,7 @@ class PagerAdapter extends FragmentStatePagerAdapter {
 
     @Override
     public int getCount() {
-        Log.d("tag", getClass().getName() + "getCOunt: "+ cities.size());
+//        Log.d("tag", getClass().getName() + "getCOunt: "+ cities.size());
         if(cities.isEmpty()){
             return 1;
         }else{

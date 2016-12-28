@@ -38,12 +38,13 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 import static com.myos.simpleweatherforecast.RecyclerViewAdapterCities.DisplayRVInferface;
 
 
 public class CityDialogFragment extends DialogFragment implements View.OnClickListener, DisplayRVInferface {
+
+    private static final String TAG = CityDialogFragment.class.getSimpleName();
 
     LocationRefreshInterface mCallback;
 
@@ -70,6 +71,7 @@ public class CityDialogFragment extends DialogFragment implements View.OnClickLi
     private FABProgressCircle fabAddLocationCircle;
 
     private RecyclerViewAdapterCities recyclerAdapter;
+
 
     @Override
     public void onAttach(Activity activity) {
@@ -265,8 +267,9 @@ public class CityDialogFragment extends DialogFragment implements View.OnClickLi
 
                                             lat = json.getJSONObject("coord").getString("lat");
                                             lon = json.getJSONObject("coord").getString("lon");
-                                            ;
-                                            processPanoramioApi(lat, lon, cityID);
+
+                                            processGooglePlacesAPI(lat, lon, cityID);
+                                            //processPanoramioApi(lat, lon, cityID);
                                         } else {
                                             fabAddLocationCircle.hide();
                                             Snackbar.make(llDialogCity, R.string.cityAlreadyExists, Snackbar.LENGTH_SHORT).show();
@@ -336,7 +339,7 @@ public class CityDialogFragment extends DialogFragment implements View.OnClickLi
 
 
 
-
+    /*@Deprecated
     private void processPanoramioApi(final String lat, final String lon, final int cityID) {
 
         String url = new StringBuilder(Constants.PANORRAMIO_PLACES_REQUEST_URL)
@@ -376,6 +379,7 @@ public class CityDialogFragment extends DialogFragment implements View.OnClickLi
 
     }
 
+    @Deprecated
     private void processPanoramioRandomPhotoApi(final String lat, final String lon, final int cityID, final int maxNumber) {
         Random r = new Random();
         int from = r.nextInt(maxNumber);
@@ -429,13 +433,12 @@ public class CityDialogFragment extends DialogFragment implements View.OnClickLi
         Singleton.getInstance().getRequestQueue().add(processPlacePhoto);
 
     }
+*/
 
 
+    //TODO add checks odisplay random photos
 
-
-   /*   May be used in future
-
-   private void processGooglePlacesAPI(String lat, String lon, final int cityID) {
+    private void processGooglePlacesAPI(String lat, String lon, final int cityID) {
         Log.d("tag", getClass().getName() + "request URL  sent: " + new StringBuilder(Constants.GOOGLE_PLACES_REQUEST_URL).append(lat + "," + lon).toString());
         StringRequest processPlacePhoto = new StringRequest(Request.Method.GET, new StringBuilder(Constants.GOOGLE_PLACES_REQUEST_URL).append(lat + "," + lon).toString(),
                 new Response.Listener<String>() {
@@ -453,14 +456,32 @@ public class CityDialogFragment extends DialogFragment implements View.OnClickLi
                                 String photoRef = null;
                                 for (int i = 0; i < array.length(); i++) {
                                     tempObj=array.getJSONObject(i);
+
                                     photosArr = tempObj.optJSONArray("photos");
                                     if(photosArr != null){
                                         photoRef = photosArr.optJSONObject(0).getString("photo_reference");
+
                                         if(photoRef != null){
-                                            Log.d("tag", getClass().getName() + "photo_reference: " + photoRef);
-                                            db.updateCity(cityID, DatabaseHandler.getKeyPhotoReference(), photoRef);
+
+                                            db.updateCity(cityID, DatabaseHandler.getKeyPhotoReference(), new StringBuilder(Constants.GOOGLE_PLACES_PHOTO_URL).append(photoRef).toString());
+
+
+                                            if (mCallback != null) {
+                                                mCallback.onRefreshLocation();
+                                            }
+
                                             break;
+                                        }else{
+                                            if (mCallback != null) {
+                                                mCallback.onRefreshLocation();
+                                            }
                                         }
+
+
+
+                                        Log.d(TAG,  getClass().getName() + "photo_reference: " + photoRef);
+                                        Log.d(TAG, "array.length(): " + array.length());
+
                                     }
                                 }
 
@@ -484,5 +505,5 @@ public class CityDialogFragment extends DialogFragment implements View.OnClickLi
                 });
         Singleton.getInstance().getRequestQueue().add(processPlacePhoto);
 
-    }*/
+    }
 }
